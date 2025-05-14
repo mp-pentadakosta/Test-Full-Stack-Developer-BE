@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, HttpCode, Param, Post, UseGuards } from "@nestjs/common";
 import { ApiTags } from '@nestjs/swagger';
-import { AuthService } from '../services/auth/auth.service';
+import { AuthService } from '../services/auth.service';
 import { LoginReqDto, RegisterReqDto } from '../dto/auth.dto';
 import { JwtAuthGuard } from '../core/dto/jwt-auth.guard';
 import { RolesGuard } from '../core/roles.guard';

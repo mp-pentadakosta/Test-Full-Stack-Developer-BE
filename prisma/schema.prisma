@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -24,21 +24,148 @@ enum Gender {
 }
 
 model User {
-  id            Int       @id @default(autoincrement()) @map("id")
-  name          String    @map("name")
-  phoneNumber   String    @unique @map("phone_number")
-  email         String    @unique @map("email")
-  password      String    @map("password")
-  address       String?   @map("address")
-  avatar        String?   @map("avatar")
-  gender        String?   @map("gender")
-  nik           String?   @map("nik")
-  imageIdentity String?   @map("image_identity")
-  dob           DateTime? @map("dob")
-  role          Role      @default(USER) @map("role")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  deletedAt     DateTime? @map("deleted_at")
+  id          Int       @id @default(autoincrement()) @map("id")
+  name        String    @map("name")
+  phoneNumber String    @unique @map("phone_number")
+  email       String    @unique @map("email")
+  password    String    @map("password")
+  role        Role      @default(USER) @map("role")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
 
   @@map("users")
+}
+
+model GamesPopular {
+  id        Int       @id @default(autoincrement()) @map("id")
+  name      String    @map("name")
+  image     String    @map("image")
+  publisher String    @map("publisher")
+  useServer Boolean   @map("use_server")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("games_popular")
+}
+
+model Games {
+  id         Int          @id @default(autoincrement()) @map("id")
+  name       String       @map("name")
+  image      String       @map("image")
+  publisher  String       @map("publisher")
+  useServer  Boolean      @map("use_server")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+  deletedAt  DateTime?    @map("deleted_at")
+  PrefixCode PrefixCode[]
+
+  @@map("games")
+}
+
+enum StatusTransaction {
+  SUCCESS
+  FAILED
+  PENDING
+  PROCESSING
+  REFUND
+}
+
+enum StatusPayment {
+  PAID
+  UNPAID
+}
+
+enum PaymentMethod {
+  QRIS
+}
+
+model Transaction {
+  id            Int               @id @default(autoincrement()) @map("id")
+  userId        Int?              @map("user_id")
+  gameId        Int               @map("game_id")
+  status        StatusTransaction @default(PENDING) @map("status")
+  statusPayment StatusPayment     @default(UNPAID) @map("status_payment")
+  total         Float             @map("total")
+  fee           Float             @map("fee")
+  price         Float             @map("price")
+  currencyCode  String            @map("currency_code")
+  priceExchange Float             @map("country_exchange")
+  prefixCodeId  Int               @map("prefix_code_id")
+  prefixCode    PrefixCode        @relation(fields: [prefixCodeId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethod     @map("payment_method")
+  usernameGame  String            @map("username_game")
+  idGameUser    String            @map("id_game_user")
+  serverGame    String?           @map("server_game")
+  waNumber      String            @map("wa_number")
+  invoice       String            @unique @map("invoice")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  deletedAt     DateTime?         @map("deleted_at")
+
+  @@map("transactions")
+}
+
+model HistoryTransaction {
+  id                   Int               @id @default(autoincrement()) @map("id")
+  userId               Int?              @map("user_id")
+  gameId               Int               @map("game_id")
+  status               StatusTransaction @default(PENDING) @map("status")
+  statusPayment        StatusPayment     @default(UNPAID) @map("status_payment")
+  total                Float             @map("total")
+  fee                  Float             @map("fee")
+  price                Float             @map("price")
+  currencyCode         String            @map("currency_code")
+  priceExchange        Float             @map("country_exchange")
+  prefixCodeId         Int               @map("prefix_code_id")
+  prefixCode           PrefixCode        @relation(fields: [prefixCodeId], references: [id], onDelete: Cascade)
+  paymentMethod        PaymentMethod     @map("payment_method")
+  usernameGame         String            @map("username_game")
+  idGameUser           String            @map("id_game_user")
+  serverGame           String?           @map("server_game")
+  waNumber             String            @map("wa_number")
+  invoice              String            @unique @map("invoice")
+  createdAtTransaction DateTime          @map("created_at_transaction")
+  updatedAtTransaction DateTime          @map("updated_at_transaction")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+  deletedAt            DateTime?         @map("deleted_at")
+
+  @@map("history_transactions")
+}
+
+model PrefixCode {
+  id                 Int                  @id @default(autoincrement()) @map("id")
+  gameId             Int                  @map("game_id")
+  games              Games                @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  code               String               @unique @map("code")
+  icon               String               @map("icon")
+  type               String               @map("type")
+  description        String?              @map("description")
+  name               String               @map("name")
+  stock              Int                  @map("stock")
+  price              Int                  @map("price")
+  fee                Int                  @map("fee")
+  status             Boolean              @default(true) @map("status")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+  deletedAt          DateTime?            @map("deleted_at")
+  Transaction        Transaction[]
+  HistoryTransaction HistoryTransaction[]
+
+  @@map("prefix_code")
+}
+
+model Country {
+  id           Int       @id @default(autoincrement()) @map("id")
+  name         String    @map("name")
+  code         String    @unique @map("code")
+  currencyCode String    @unique @map("currency_code")
+  icon         String    @map("icon")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  @@map("country")
 }

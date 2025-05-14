@@ -10,13 +10,14 @@ import { appModuleService } from './services/app.module.service';
 import { appModuleRepository } from './repository/app.module.repository';
 import { appModelIntegration } from './integration/app.model.integration';
 import { AxiosInterceptorCore } from './core/axios.interceptor.core';
-import { RedisModuleData } from './redis/redis.module';
+// import { RedisModuleData } from './redis/redis.module';
 import { PrismaClientExceptionFilter, PrismaModule } from 'nestjs-prisma';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, HttpAdapterHost } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { appModuleScheduler } from './scheduler/app.module.scheduler';
 import { appModuleUtils } from './utils/app.module.utils';
+import { SocketGateway } from './socket/socket.gateway';
 
 @Module({
   imports: [
@@ -51,7 +52,7 @@ import { appModuleUtils } from './utils/app.module.utils';
       }),
     }),
     ScheduleModule.forRoot(),
-    RedisModuleData,
+    // RedisModuleData,
   ],
   controllers: appModuleController,
   providers: [
@@ -75,6 +76,7 @@ import { appModuleUtils } from './utils/app.module.utils';
     ...appModuleService,
     ...appModelIntegration,
     ...appModuleUtils,
+    SocketGateway,
   ],
 })
 export class AppModule {}

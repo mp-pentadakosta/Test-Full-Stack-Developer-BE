@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../core/dto/jwt-auth.guard';
-import { UserService } from '../services/user/user.service';
+import { UserService } from '../services/user.service';
 import { Roles } from 'src/core/roles.decorator';
 import { RolesGuard } from '../core/roles.guard';
 import { Role } from '@prisma/client';

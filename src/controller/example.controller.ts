@@ -11,7 +11,7 @@ import { JwtAuthGuard } from '../core/dto/jwt-auth.guard';
 import { Roles } from 'src/core/roles.decorator';
 import { RolesGuard } from '../core/roles.guard';
 import { Role } from '@prisma/client';
-import { ExampleService } from '../services/example/example.service';
+import { ExampleService } from '../services/example.service';
 
 @ApiTags('Example Controller')
 @ApiBearerAuth('access-token')

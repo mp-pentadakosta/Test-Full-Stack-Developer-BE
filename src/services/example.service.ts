@@ -1,16 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '../../repository/user.repository';
-import { ResponseSuccess } from '../../core/dto/response';
-import { errors } from '../../error/error';
-import { CustomHttpException } from '../../core/custom.http.exception';
-import { DateTimeUtils } from '../../utils/date.time.utils';
+import { UserRepository } from '../repository/user.repository';
+import { ResponseSuccess } from '../core/dto/response';
+import { errors } from '../error/error';
+import { CustomHttpException } from '../core/custom.http.exception';
 
 @Injectable()
 export class ExampleService {
-  constructor(
-    private readonly userRepository: UserRepository,
-    private readonly dateTimeUtils: DateTimeUtils,
-  ) {}
+  constructor(private readonly userRepository: UserRepository) {}
 
   async getExample(page: number, limit: number): Promise<any> {
     const resp = await this.userRepository.getAllUser(page, limit);
@@ -19,9 +15,6 @@ export class ExampleService {
       listData: resp.map((item) => {
         return {
           ...item,
-          dob: item.dob
-            ? this.dateTimeUtils.dateToStringYYYYMMDD(item.dob)
-            : '',
         };
       }),
     });
@@ -37,7 +30,6 @@ export class ExampleService {
     return ResponseSuccess.success({
       data: {
         ...resp,
-        dob: resp.dob ? this.dateTimeUtils.dateToStringDDMMMYYYY(resp.dob) : '',
       },
     });
   }
@@ -49,9 +41,6 @@ export class ExampleService {
       listData: resp.map((item) => {
         return {
           ...item,
-          dob: item.dob
-            ? this.dateTimeUtils.dateToStringDDMMMYYYY(item.dob)
-            : '',
         };
       }),
     });

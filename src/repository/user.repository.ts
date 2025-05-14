@@ -68,16 +68,12 @@ export class UserRepository {
           phoneNumber: data.phoneNumber,
           email: data.email,
           password: data.password,
-          dob: data.dob,
-          address: data.address,
         },
         create: {
           name: data.fullName,
           phoneNumber: data.phoneNumber,
           email: data.email,
           password: data.password,
-          dob: data.dob,
-          address: data.address,
           role: Role.USER,
         },
       });
@@ -104,19 +100,16 @@ export class UserRepository {
           {
             name: {
               contains: search,
-              mode: 'insensitive',
             },
           },
           {
             phoneNumber: {
               contains: search,
-              mode: 'insensitive',
             },
           },
           {
             email: {
               contains: search,
-              mode: 'insensitive',
             },
           },
         ],
@@ -143,9 +136,6 @@ export class UserRepository {
           name: data.fullName,
           phoneNumber: data.phoneNumber,
           email: data.email,
-          dob: data.dob,
-          avatar: data.avatar,
-          address: data.address,
         },
       })
       .then((res) => {

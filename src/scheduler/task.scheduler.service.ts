@@ -1,28 +1,72 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
+import { PrismaService } from 'nestjs-prisma';
+import { StatusPayment, StatusTransaction } from '@prisma/client';
 
 @Injectable()
 export class TaskSchedulerService {
+  constructor(private readonly prisma: PrismaService) {}
   private readonly logger = new Logger(TaskSchedulerService.name);
 
-  @Cron(CronExpression.EVERY_MINUTE, {
-    name: 'task_scheduler',
-  })
-  handleCron() {
-    this.logger.debug('Running a task every minute using Cron');
+  // @Cron('*/10 * * * *')
+  @Cron('*/5 * * * * *')
+  async retryFailedPayments() {
+    Logger.log('Running retryFailedPayments task...');
+    const failedTransactions = await this.prisma.transaction.findMany({
+      where: {
+        statusPayment: StatusPayment.UNPAID,
+      },
+    });
+
+    for (const tx of failedTransactions) {
+      const success = Math.random() < 0.7; //simulate a 70% success rate
+
+      if (success) {
+        await this.prisma.transaction.update({
+          where: { id: tx.id },
+          data: {
+            statusPayment: 'PAID',
+          },
+        });
+      } else {
+        await this.prisma.transaction.update({
+          where: { id: tx.id },
+          data: {
+            statusPayment: 'UNPAID',
+          },
+        });
+      }
+    }
   }
 
-  @Cron(CronExpression.EVERY_MINUTE, {
-    name: 'task_scheduler',
-  })
-  handleInterval() {
-    this.logger.debug('Running a task every 10 seconds using Interval');
-  }
+  // @Cron('*/10 * * * *')
+  @Cron('*/5 * * * * *')
+  async retryFailedTransaction() {
+    Logger.log('Running retryFailedTransaction task...');
+    const failedTransactions = await this.prisma.transaction.findMany({
+      where: {
+        status: StatusTransaction.FAILED,
+      },
+    });
 
-  @Cron(CronExpression.EVERY_MINUTE, {
-    name: 'task_scheduler',
-  })
-  handleTimeout() {
-    this.logger.debug('Running a task once after 5 seconds using Timeout');
+    for (const tx of failedTransactions) {
+      const success = Math.random() < 0.7; //simulate a 70% success rate
+
+      if (success) {
+        await this.prisma.transaction.update({
+          where: { id: tx.id },
+          data: {
+            status: StatusTransaction.SUCCESS,
+          },
+        });
+      } else {
+        await this.prisma.transaction.update({
+          where: { id: tx.id },
+          data: {
+            status: StatusTransaction.FAILED,
+          },
+        });
+      }
+    }
   }
 }
