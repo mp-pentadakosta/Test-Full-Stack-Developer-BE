@@ -8,8 +8,7 @@ export class TaskSchedulerService {
   constructor(private readonly prisma: PrismaService) {}
   private readonly logger = new Logger(TaskSchedulerService.name);
 
-  // @Cron('*/10 * * * *')
-  @Cron('*/5 * * * * *')
+  @Cron('*/10 * * * *')
   async retryFailedPayments() {
     Logger.log('Running retryFailedPayments task...');
     const failedTransactions = await this.prisma.transaction.findMany({
@@ -39,8 +38,7 @@ export class TaskSchedulerService {
     }
   }
 
-  // @Cron('*/10 * * * *')
-  @Cron('*/5 * * * * *')
+  @Cron('*/10 * * * *')
   async retryFailedTransaction() {
     Logger.log('Running retryFailedTransaction task...');
     const failedTransactions = await this.prisma.transaction.findMany({

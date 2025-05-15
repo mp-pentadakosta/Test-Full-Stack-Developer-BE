@@ -1,0 +1,113 @@
+name: CI/CD for Node.js App
+
+on:
+  push:
+    branches: [ dev ]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18.18.0'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Build the application
+        run: npm run build
+  docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: build # This job depends on the `build` job
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        run: |
+          # Tentukan nama image berdasarkan branch
+          if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+            IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/be-komik-prod:${{ github.sha }}
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/be-komik-staging:${{ github.sha }}
+          else
+            IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/be-komik-dev:${{ github.sha }}
+          fi
+
+          # Build dan push Docker image
+          docker build . -t $IMAGE_NAME
+          docker push $IMAGE_NAME
+
+  deploy:
+    name: Deploy to VPS
+    needs: docker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_AWS }}
+          username: ${{ secrets.VPS_USERNAME_AWS }}
+          key: ${{ secrets.VPS_PRIVATE_KEY_AWS }}
+          script: |
+            mkdir -p ~/.ssh
+            ssh-keyscan -H ${{ secrets.VPS_HOST_AWS }} >> ~/.ssh/known_hosts
+
+            # Tentukan port, nama container, dan nama image berdasarkan branch
+            if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+              PORT=8087
+              CONTAINER_NAME=be-komik-prod
+              IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/be-komik-prod:${{ github.sha }}
+            elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+              PORT=8086
+              CONTAINER_NAME=be-komik-staging
+              IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/be-komik-staging:${{ github.sha }}
+            else
+              PORT=8085
+              CONTAINER_NAME=be-komik-dev
+              IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/be-komik-dev:${{ github.sha }}
+            fi
+
+            # Pull image terbaru
+            sudo docker pull $IMAGE_NAME
+
+            # Stop dan remove container lama (jika ada)
+            sudo docker stop $CONTAINER_NAME || true
+            sudo docker rm $CONTAINER_NAME || true
+
+            # Run container baru dengan nama dan port yang sesuai
+            sudo docker run -d \
+              --name $CONTAINER_NAME \
+              -p ${PORT}:${PORT} \
+              -e PORT=${PORT} \
+              -v /home/ubuntu/$CONTAINER_NAME/.env:/home/node/app/.env \
+              $IMAGE_NAME
+
+            # Jalankan migrasi Prisma
+            sudo docker exec $CONTAINER_NAME npx prisma generate
+            sudo docker exec $CONTAINER_NAME npx prisma migrate deploy
+
+            # Membersihkan image yang tidak diperlukan
+            sudo docker image prune -a -f

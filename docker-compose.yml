@@ -1,0 +1,62 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:12
+    environment:
+      POSTGRES_USER: 'admin'
+      POSTGRES_PASSWORD: 'admin'
+      POSTGRES_DB: 'nodeTemplateDB'
+    volumes:
+      - db:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  dev:
+    image: be-komik-dev
+    environment:
+      - PORT=8080
+    volumes:
+      - /home/ubuntu/be-komik-dev/.env:/home/node/app/.env
+    ports:
+      - "8080:8080"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  uat:
+    image: be-komik-uat
+    environment:
+      - PORT=8080
+    volumes:
+      - /home/ubuntu/be-komik-uat/.env:/home/node/app/.env
+    ports:
+      - "8080:8080"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  prod:
+    image: be-komik-prod
+    environment:
+      - PORT=8080
+    volumes:
+      - /root/be-komik-prod/.env:/home/node/app/.env
+    ports:
+      - "8080:8080"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  db:
